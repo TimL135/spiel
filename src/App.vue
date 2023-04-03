@@ -131,12 +131,8 @@ export default {
     },
     checkDeath() {
       if (this.y >= window.innerHeight - 100) {
-        this.hp--;
-        for (let i = 0; i < 30; i++) {
-          setTimeout(() => {
-            this.moveUp();
-          }, 5 * i);
-        }
+        // this.hp--;
+        this.y = 100;
       }
       if (this.hp == 0) this.isPlaying = false;
     },
@@ -165,9 +161,9 @@ export default {
         if (this.pressedKeys["ArrowDown"]) this.moveDown();
         if (this.pressedKeys["ArrowLeft"]) this.moveLeft();
         if (this.pressedKeys["ArrowRight"]) this.moveRight();
-        if (!this.isJumping) {
-          this.moveDown();
-        }
+        // if (!this.isJumping) {
+        //   this.moveDown();
+        // }
         if (this.y == this.lastY) {
           this.isFalling = false;
         }
@@ -205,7 +201,7 @@ export default {
             this.x + 50 > obstacle.x &&
             obstacle.x + 50 > this.x &&
             obstacle.y < this.y &&
-            obstacle.y + 50 >= this.y
+            obstacle.y + 60 >= this.y
           );
         })
       )
@@ -218,7 +214,7 @@ export default {
             this.x + 50 > obstacle.x &&
             obstacle.x + 50 > this.x &&
             obstacle.y >= this.y &&
-            obstacle.y - 50 <= this.y
+            obstacle.y - 60 <= this.y
           );
         })
       )
@@ -231,7 +227,7 @@ export default {
             this.y + 50 > obstacle.y &&
             obstacle.y + 50 > this.y &&
             obstacle.x < this.x &&
-            obstacle.x + 50 >= this.x
+            obstacle.x + 60 >= this.x
           );
         }) &&
         this.x > 0
@@ -245,7 +241,7 @@ export default {
             this.y + 50 > obstacle.y &&
             obstacle.y + 50 > this.y &&
             obstacle.x >= this.x &&
-            obstacle.x - 50 <= this.x
+            obstacle.x - 60 <= this.x
           );
         }) &&
         this.x + 50 < window.innerWidth
