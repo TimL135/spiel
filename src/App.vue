@@ -1,6 +1,66 @@
 <template>
-  <div style="height: 100vh; background-color: #00bcd4">
-    <div style="position: absolute; top: 15px; left: 15px">{{ score }}</div>
+  <div
+    style="height: 100vh; background-size: cover; background-repeat: no-repeat"
+    :class="'daybg'"
+  >
+    <div
+      style="height: 100vh; width:100vw;position:absolute:top:0;left:0; background-size: cover; "
+      :style="`opacity:${
+        currentTick % 2000 < 900
+          ? 0
+          : currentTick % 2000 < 1000
+          ? ((currentTick % 2000) - 900) / 100
+          : currentTick % 2000 < 1900
+          ? 1
+          : 1 - ((currentTick % 2000) - 1900) / 100
+      }`"
+      :class="'nightbg'"
+    ></div>
+    <button
+      v-if="!isPlaying"
+      style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: greenyellow;
+        border: none;
+        padding: 7px;
+      "
+      @click="startGame"
+    >
+      Start
+    </button>
+    <div
+      style="
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        text-shadow: -1px -1px 0px white, 1px 1px 0px white, -1px 1px white,
+          1px -1px 0px white;
+      "
+    >
+      <b>{{ score }}</b>
+    </div>
+    <div
+      style="
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+      "
+    >
+      <div
+        v-for="n in hp"
+        style="
+          background-image: url('heart.png');
+          width: 50px;
+          height: 50px;
+          background-size: contain;
+        "
+      ></div>
+    </div>
     <div
       class="square"
       :style="{ top: y + 'px', left: x + 'px' }"
@@ -27,8 +87,9 @@ export default {
     return {
       isJumping: false, // Ob das Quadrat gerade springt oder nicht
       isFalling: false,
+      isPlaying: false,
       score: 0,
-      lastY: window.innerHeight - 50 - 50,
+      lastY: 50,
       jumpHeight: 100, // Wie hoch das Quadrat springen soll
       jumpSpeed: 10, // Wie schnell das Quadrat springen soll
       gravity: 5, // Wie schnell das Quadrat fallen soll
@@ -38,6 +99,7 @@ export default {
       groundHeight: 50,
       obstacles: [],
       currentTick: 0,
+      hp: 3,
     };
   },
   async mounted() {
@@ -47,23 +109,47 @@ export default {
     window.onkeydown = (e) => {
       this.pressedKeys[e.key] = true;
     };
-    this.gameloop();
+  },
+  computed: {
+    speed() {
+      return Math.round(this.score / 1000 + 2);
+    },
   },
   methods: {
+    startGame() {
+      this.isPlaying = true;
+      this.gameloop();
+      this.score = 0;
+      this.y = 50;
+      this.hp = 3;
+    },
+    checkDeath() {
+      if (this.y >= window.innerHeight - 100) {
+        //this.hp--;
+        for (let i = 0; i < 30; i++) {
+          setTimeout(() => {
+            this.moveUp();
+          }, 5 * i);
+        }
+      }
+      if (this.hp == 0) this.isPlaying = false;
+    },
     gameloop() {
-      setInterval(() => {
+      let game = setInterval(() => {
+        this.checkDeath();
+        if (!this.isPlaying) clearInterval(game);
         this.currentTick++;
         this.score++;
-        if (this.currentTick % 60 == 0) {
+        if (this.currentTick % Math.round(90 / this.speed + 20) == 0) {
           this.spawnObstacle();
         }
         this.moveObstacle();
         if (this.pressedKeys["ArrowUp"] && !this.isJumping && !this.isFalling) {
           this.isJumping = true;
-          for (let i = 0; i < 10; i++) {
+          for (let i = 0; i < 15; i++) {
             setTimeout(() => {
               this.moveUp();
-            }, 20 * i);
+            }, 10 * i);
           }
           setTimeout(() => {
             this.isJumping = false;
@@ -80,6 +166,7 @@ export default {
           this.isFalling = false;
         }
         this.lastY = this.y;
+        this.deleteObstacle();
       }, 1000 / 30);
     },
     spawnObstacle() {
@@ -99,8 +186,11 @@ export default {
     },
     moveObstacle() {
       for (let obstacle of this.obstacles) {
-        obstacle.x -= 2;
+        obstacle.x -= this.speed;
       }
+    },
+    deleteObstacle() {
+      this.obstacles = this.obstacles.filter((o) => o.x > 0);
     },
     moveUp() {
       if (
@@ -137,7 +227,8 @@ export default {
             obstacle.x < this.x &&
             obstacle.x + 50 >= this.x
           );
-        })
+        }) &&
+        this.x > 0
       )
         this.x -= 10;
     },
@@ -150,7 +241,8 @@ export default {
             obstacle.x >= this.x &&
             obstacle.x - 50 <= this.x
           );
-        })
+        }) &&
+        this.x + 50 < window.innerWidth
       )
         this.x += 10;
     },
@@ -163,13 +255,21 @@ export default {
   position: absolute;
   width: 50px;
   height: 50px;
-  background-color: rgb(0, 0, 0);
+  background-image: url("steve.png");
+  background-size: cover;
 }
 .obstacle {
   position: absolute;
   width: 50px;
   height: 50px;
-  background-color: rgb(8, 146, 26);
+  background-image: url("gras.jpg");
+  background-size: cover;
+}
+.daybg {
+  background-image: url("sky.png");
+}
+.nightbg {
+  background-image: url("nightsky.png");
 }
 body {
   margin: 0;
