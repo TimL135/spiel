@@ -131,7 +131,7 @@ export default {
     },
     checkDeath() {
       if (this.y >= window.innerHeight - 100) {
-        //this.hp--;
+        this.hp--;
         for (let i = 0; i < 30; i++) {
           setTimeout(() => {
             this.moveUp();
