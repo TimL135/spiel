@@ -1,5 +1,8 @@
 <template>
-  <div class="ground"></div>
+  <div
+    class="ground"
+    style="background-image: url('Lava_Animation.webp')"
+  ></div>
 </template>
 
 <style>
@@ -9,7 +12,6 @@
   left: 0;
   width: 100%;
   height: 50px;
-  background-image: url("Lava_Animation.webp");
   background-size: contain;
 }
 </style>
