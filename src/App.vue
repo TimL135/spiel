@@ -1,10 +1,14 @@
 <template>
   <div
-    style="height: 100vh; background-size: cover; background-repeat: no-repeat"
-    :class="'daybg'"
+    style="
+      height: 100vh;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-image: url('sky.png');
+    "
   >
     <div
-      style="height: 100vh; width:100vw;position:absolute:top:0;left:0; background-size: cover; "
+      style="height: 100vh; width:100vw;position:absolute:top:0;left:0; background-size: cover; background-image: url('nightsky.png'); "
       :style="`opacity:${
         currentTick % 2000 < 900
           ? 0
@@ -64,6 +68,7 @@
     <div
       class="square"
       :style="{ top: y + 'px', left: x + 'px' }"
+      style="background-image: url('steve.png')"
       tabindex="0"
     ></div>
     <div
@@ -71,6 +76,7 @@
       v-for="(obstacle, index) in obstacles"
       :key="index"
       :style="{ top: obstacle.y + 'px', left: obstacle.x + 'px' }"
+      style="background-image: url('gras.jpg')"
     ></div>
 
     <Ground />
@@ -255,21 +261,13 @@ export default {
   position: absolute;
   width: 50px;
   height: 50px;
-  background-image: url("steve.png");
   background-size: cover;
 }
 .obstacle {
   position: absolute;
   width: 50px;
   height: 50px;
-  background-image: url("gras.jpg");
   background-size: cover;
-}
-.daybg {
-  background-image: url("sky.png");
-}
-.nightbg {
-  background-image: url("nightsky.png");
 }
 body {
   margin: 0;
