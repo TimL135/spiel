@@ -8,7 +8,15 @@
     "
   >
     <div
-      style="height: 100vh; width:100vw;position:absolute:top:0;left:0; background-size: cover; background-image: url('nightsky.png'); "
+      style="
+        height: 100vh;
+        width: 100vw;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-size: cover;
+        background-image: url('nightsky.png');
+      "
       :style="`opacity:${
         currentTick % 2000 < 900
           ? 0
@@ -91,14 +99,11 @@ export default {
   },
   data() {
     return {
-      isJumping: false, // Ob das Quadrat gerade springt oder nicht
+      isJumping: false,
       isFalling: false,
       isPlaying: false,
       score: 0,
       lastY: 50,
-      jumpHeight: 100, // Wie hoch das Quadrat springen soll
-      jumpSpeed: 10, // Wie schnell das Quadrat springen soll
-      gravity: 5, // Wie schnell das Quadrat fallen soll
       pressedKeys: {},
       x: window.innerWidth - 100,
       y: 50,
@@ -131,7 +136,7 @@ export default {
     },
     checkDeath() {
       if (this.y >= window.innerHeight - 100) {
-        // this.hp--;
+        this.hp--;
         this.y = 100;
       }
       if (this.hp == 0) this.isPlaying = false;
@@ -161,9 +166,9 @@ export default {
         if (this.pressedKeys["ArrowDown"]) this.moveDown();
         if (this.pressedKeys["ArrowLeft"]) this.moveLeft();
         if (this.pressedKeys["ArrowRight"]) this.moveRight();
-        // if (!this.isJumping) {
-        //   this.moveDown();
-        // }
+        if (!this.isJumping) {
+          this.moveDown();
+        }
         if (this.y == this.lastY) {
           this.isFalling = false;
         }
@@ -172,19 +177,13 @@ export default {
       }, 1000 / 30);
     },
     spawnObstacle() {
-      // Erstelle ein neues Hindernisobjekt
       const newObstacle = {
-        x: window.innerWidth - 50, // Startposition auf der rechten Seite des Bildschirms
-        y: window.innerHeight - 100 - Math.floor(Math.random() * 200), // Zufällige y-Position zwischen 200 und 400
+        x: window.innerWidth - 50,
+        y: window.innerHeight - 100 - Math.floor(Math.random() * 200),
         width: 50,
         height: 50,
       };
-
-      // Füge das Hindernisobjekt der Liste der Hindernisse hinzu
       this.obstacles.push(newObstacle);
-
-      // Inkrementiere den Hindernis-ID-Zähler
-      this.obstacleId++;
     },
     moveObstacle() {
       for (let obstacle of this.obstacles) {
