@@ -2,6 +2,9 @@
   <div
     style="
       height: 100vh;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
       background-size: cover;
       background-repeat: no-repeat;
       background-image: url('sky.png');
@@ -28,21 +31,39 @@
       }`"
       :class="'nightbg'"
     ></div>
-    <button
+    <div
       v-if="!isPlaying"
       style="
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: greenyellow;
-        border: none;
-        padding: 7px;
       "
-      @click="startGame"
     >
-      Start
-    </button>
+      <div style="display: flex; justify-content: center">
+        <input type="text" v-model="playerName" />
+        <button @click="startGame" :disabled="!playerName">Start</button>
+      </div>
+
+      <div style="max-height: 70vh; overflow: auto">
+        <table>
+          <tr>
+            <td>Rank</td>
+            <td>Name</td>
+            <td>Score</td>
+          </tr>
+          <tr
+            v-for="(score, index) in highscores.sort(
+              (a, b) => b.score - a.score
+            )"
+          >
+            <td>{{ index + 1 }}</td>
+            <td>{{ score.name }}</td>
+            <td>{{ score.score }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
     <div
       style="
         position: absolute;
@@ -52,7 +73,7 @@
           1px -1px 0px white;
       "
     >
-      <b>{{ score }}</b>
+      <b>{{ score > 0 ? score - 1 : 0 }}</b>
     </div>
     <div
       style="
@@ -86,13 +107,30 @@
       :style="{ top: obstacle.y + 'px', left: obstacle.x + 'px' }"
       style="background-image: url('gras.jpg')"
     ></div>
-
+    <div
+      v-if="apple.x > -30"
+      style="
+        background-image: url('Verzauberter_goldener_Apfel.webp');
+        background-size: contain;
+        position: absolute;
+        width: 30px;
+        height: 30px;
+      "
+      :style="{ top: apple.y + 'px', left: apple.x + 'px' }"
+    ></div>
     <Ground />
   </div>
 </template>
 
-<script>
+<script lang="js">
 import Ground from "./components/Ground.vue";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  setDoc,
+} from "firebase/firestore";
 export default {
   components: {
     Ground,
@@ -111,6 +149,10 @@ export default {
       obstacles: [],
       currentTick: 0,
       hp: 3,
+      highscores: [],
+      playerName:'',
+      apple: {x:-50,y:0},
+      blockCounter:0,
     };
   },
   async mounted() {
@@ -120,10 +162,11 @@ export default {
     window.onkeydown = (e) => {
       this.pressedKeys[e.key] = true;
     };
+    this.highscores = await this.getEntries()
   },
   computed: {
     speed() {
-      return Math.round(this.score / 1000 + 2);
+      return Math.round(this.score / 700 + 2);
     },
   },
   methods: {
@@ -132,24 +175,33 @@ export default {
       this.gameloop();
       this.score = 0;
       this.y = 50;
+      this.x = window.innerWidth - 100;
       this.hp = 3;
+      this.obstacles = [];
+      this.blockCounter = 0;
+      this.apple = {x:-50,y:0};
     },
-    checkDeath() {
+    async checkDeath() {
       if (this.y >= window.innerHeight - 100) {
         this.hp--;
         this.y = 100;
       }
-      if (this.hp == 0) this.isPlaying = false;
+      if (this.hp == 0) {
+        this.isPlaying = false;
+        await this.getEntries();
+        if(this.playerName != 'test')this.createEntry(this.playerName,this.score)
+      }
     },
     gameloop() {
       let game = setInterval(() => {
         this.checkDeath();
         if (!this.isPlaying) clearInterval(game);
-        this.currentTick++;
         this.score++;
         if (this.currentTick % Math.round(90 / this.speed + 20) == 0) {
           this.spawnObstacle();
         }
+        this.currentTick++;
+        this.collectHeart();
         this.moveObstacle();
         if (this.pressedKeys["ArrowUp"] && !this.isJumping && !this.isFalling) {
           this.isJumping = true;
@@ -176,22 +228,41 @@ export default {
         this.deleteObstacle();
       }, 1000 / 30);
     },
+    collectHeart(){
+      if(
+        this.x < this.apple.x + 30 &&
+        this.x+ 50 > this.apple.x &&
+        this.y < this.apple.y + 30 &&
+        this.y+ 50 > this.apple.y
+      ){
+          this.hp +=1;
+          this.apple.x = -50
+      }
+    },
     spawnObstacle() {
+      let lastObstacleY = this.obstacles.at(-1)?.y || window.innerHeight - 100
+      let newY = lastObstacleY + Math.round(Math.random()*100 - 50)
       const newObstacle = {
-        x: window.innerWidth - 50,
-        y: window.innerHeight - 100 - Math.floor(Math.random() * 200),
+        x: window.innerWidth,
+        y: newY > window.innerHeight - 100 ? window.innerHeight - 100 : newY < window.innerHeight - 500 ? window.innerHeight - 500 : newY,
         width: 50,
         height: 50,
       };
       this.obstacles.push(newObstacle);
+      this.blockCounter++;
+      if(this.blockCounter % 15 == 0){
+        this.apple.x = newObstacle.x + 10
+        this.apple.y = newObstacle.y - 100
+      }
     },
     moveObstacle() {
       for (let obstacle of this.obstacles) {
         obstacle.x -= this.speed;
       }
+      if(this.apple.x > -50) this.apple.x -= this.speed
     },
     deleteObstacle() {
-      this.obstacles = this.obstacles.filter((o) => o.x > 0);
+      this.obstacles = this.obstacles.filter((o) => o.x > -50);
     },
     moveUp() {
       if (
@@ -246,6 +317,26 @@ export default {
         this.x + 50 < window.innerWidth
       )
         this.x += 10;
+    },
+    async createEntry(name, score) {
+      const id = Math.random().toString().substring(2, 15);
+      const highscore = {
+        name,
+        id,
+        score,
+      };
+      await setDoc(doc(getFirestore(), "Highscores", id), highscore);
+      return highscore
+    },
+    async getEntries() {
+      const docs = [];
+      const querySnapshot = await getDocs(
+      collection(getFirestore(), "Highscores")
+      );
+      querySnapshot.forEach((doc) => {
+        docs.push(doc);
+      });
+      return docs.map((doc) => doc.data()).map((entry) => ({ ...entry }));
     },
   },
 };
